@@ -1,7 +1,11 @@
+import { chown } from 'fs';
 import * as vscode from 'vscode';
+const { OpenAIClient, AzureKeyCredential } = require("@azure/openai");
 
 const CAT_NAMES_COMMAND_ID = 'cat.namesInEditor';
 const CAT_PARTICIPANT_ID = 'chat-sample.cat';
+const endpoint = 'https://dempgptusnc.openai.azure.com/';
+const azureApiKey = '01bcc1ee88ee419e9cae535161d27add';
 
 interface ICatChatResult extends vscode.ChatResult {
     metadata: {
@@ -19,21 +23,59 @@ export function activate(context: vscode.ExtensionContext) {
         // extension can use VS Code's `requestChatAccess` API to access the Copilot API.
         // The GitHub Copilot Chat extension implements this provider.
         if (request.command == 'teach') {
-            stream.progress('Picking the right topic to teach...');
-            const topic = getTopic(context.history);
+            stream.progress('让我思考一下如何回复您的问题');
+            //const topic = getTopic(context.history);
+            //const messages = [
+            //    new vscode.LanguageModelChatSystemMessage('You are a cat! Your job is to explain computer science concepts in the funny manner of a cat. Always start your response by stating what concept you are explaining. Always include code samples.'),
+            //    new vscode.LanguageModelChatUserMessage(topic)
+            //];
+            //const chatResponse = await vscode.lm.sendChatRequest(LANGUAGE_MODEL_ID, messages, {}, token);
+            //for await (const fragment of chatResponse.stream) {
+            //    stream.markdown(fragment);
+            //} 
+            const openai = new OpenAIClient(
+                endpoint,
+                new AzureKeyCredential(azureApiKey)
+            );
             const messages = [
-                new vscode.LanguageModelChatSystemMessage('You are a cat! Your job is to explain computer science concepts in the funny manner of a cat. Always start your response by stating what concept you are explaining. Always include code samples.'),
-                new vscode.LanguageModelChatUserMessage(topic)
+                { role: "system", content: "You are a teacher. You will talk like a teacher." },
+                { role: "user", content: request.prompt },
+            //    { role: "assistant", content: "Arrrr! Of course, me hearty! What can I do for ye?" },
+            //    { role: "user", content: "What's the best way to train a parrot?" },
             ];
-            const chatResponse = await vscode.lm.sendChatRequest(LANGUAGE_MODEL_ID, messages, {}, token);
-            for await (const fragment of chatResponse.stream) {
-                stream.markdown(fragment);
-            }
+            
+            //const prompt = request.prompt;
+            //const deploymentName = 'demodavinci';
+            //const result  = await openai.getCompletions(deploymentName, request.prompt, {
+            //    maxTokens: 500,
+            //    temperature: 0.25
+            //    });
+            
+            const deploymentName = 'demogpt35';
+            const result  = await openai.getChatCompletions(deploymentName, messages, {
+                maxTokens: 500,
+                temperature: 0.25
+                });    
 
-            stream.button({
-                command: CAT_NAMES_COMMAND_ID,
-                title: vscode.l10n.t('Use Cat Names in Editor')
-            });
+            //for (const choice of result) {
+            for await (const choice of result.choices) {
+                //console.log(choice.text);
+                //const delta = choice.delta?.content;
+                //if (delta !== undefined) {
+                console.log(choice.message.content);
+                //const chat: string = choice.message;
+                stream.markdown(`${choice.message.content}`);
+                };
+            //}
+            //};
+            //console.log(result.choices[0].text);
+            //for await (const fragment of result.stream()) {
+            //stream.markdown(result.
+            //};
+            //stream.button({
+            //    command: CAT_NAMES_COMMAND_ID,
+            //    title: vscode.l10n.t('Use Cat Names in Editor')
+            //});
 
             return { metadata: { command: 'teach' } };
         } else if (request.command == 'play') {
@@ -69,7 +111,7 @@ export function activate(context: vscode.ExtensionContext) {
     // when you type `@`, and can contribute sub-commands in the chat input
     // that appear when you type `/`.
     const cat = vscode.chat.createChatParticipant(CAT_PARTICIPANT_ID, handler);
-    cat.iconPath = vscode.Uri.joinPath(context.extensionUri, 'cat.jpeg');
+    cat.iconPath = vscode.Uri.joinPath(context.extensionUri, 'qifeng.jpg');
     cat.followupProvider = {
         provideFollowups(result: ICatChatResult, context: vscode.ChatContext, token: vscode.CancellationToken) {
             return [{

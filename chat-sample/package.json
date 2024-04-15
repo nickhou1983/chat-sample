@@ -27,8 +27,8 @@
         "chatParticipants": [
             {
 				"id": "chat-sample.cat",
-                "name": "cat",
-                "description": "Meow! What can I teach you?",
+                "name": "QifengDemo",
+                "description": "What can I teach you?",
                 "isSticky": true,
                 "commands": [
                     {
@@ -53,7 +53,8 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./"
+        "watch": "tsc -watch -p ./",
+        "start": "nodemon src/extension.ts"
     },
     "devDependencies": {
         "@types/node": "^20.5.9",
