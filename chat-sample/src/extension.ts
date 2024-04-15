@@ -13,18 +13,20 @@ interface ICatChatResult extends vscode.ChatResult {
     }
 }
 
-const LANGUAGE_MODEL_ID = 'copilot-gpt-4'; // Use faster model. Alternative is 'copilot-gpt-4', which is slower but more powerful
+const LANGUAGE_MODEL_ID = 'copilot-gpt-3.5-turbo'; // Use faster model. Alternative is 'copilot-gpt-4', which is slower but more powerful
 
 export function activate(context: vscode.ExtensionContext) {
 
     // Define a Cat chat handler. 
     const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<ICatChatResult> => {
+        //　第一个判断是判断是否是teach命令，如果是teach命令，就调用Azure openai的接口，返回结果
         if (request.command == 'teach') {
             stream.progress('让我思考一下如何回复您的问题...');
             const openai = new OpenAIClient(
                 endpoint,
                 new AzureKeyCredential(azureApiKey)
             );
+            // 构造消息
             const messages = [
                 { role: "system", content: "You are a teacher. You will talk like a teacher." },
                 { role: "user", content: request.prompt },
@@ -32,15 +34,18 @@ export function activate(context: vscode.ExtensionContext) {
             //    { role: "user", content: "What's the best way to train a parrot?" },
             ];
             const deploymentName = 'demogpt35';
+            // 调用openai的接口
             const result  = await openai.getChatCompletions(deploymentName, messages, {
                 maxTokens: 500,
                 temperature: 0.25
                 });    
+            // 输出结果
             for await (const choice of result.choices) {
                 console.log(choice.message.content);
                 stream.markdown(`${choice.message.content}`);
                 };
             return { metadata: { command: 'teach' } };
+          // 第二个判断是判断是否是gencode命令，如果是gencode命令，就调用copilot的接口，返回结果
         } else if (request.command == 'gencode') {
              // To talk to an LLM in your subcommand handler implementation, your
             // extension can use VS Code's `requestChatAccess` API to access the Copilot API.
@@ -51,6 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
                 new vscode.LanguageModelChatSystemMessage('You are a developer, When replying to a question, the code must be included.'),
                 new vscode.LanguageModelChatUserMessage(topic)
             ];
+            console.log('messages:', messages);
             const chatResponse = await vscode.lm.sendChatRequest(LANGUAGE_MODEL_ID, messages, {}, token);
             for await (const fragment of chatResponse.stream) {
                 stream.markdown(fragment);
