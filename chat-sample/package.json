@@ -33,7 +33,11 @@
                 "commands": [
                     {
                         "name": "teach",
-                        "description": "Pick at random a computer science concept then explain it in purfect way of a cat"
+                        "description": "我可以教你任何内容"
+                    },
+                    {
+                        "name": "gencode",
+                        "description": "我可以帮你生成代码"
                     },
                     {
                         "name": "play",

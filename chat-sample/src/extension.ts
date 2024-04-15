@@ -13,26 +13,14 @@ interface ICatChatResult extends vscode.ChatResult {
     }
 }
 
-const LANGUAGE_MODEL_ID = 'copilot-gpt-3.5-turbo'; // Use faster model. Alternative is 'copilot-gpt-4', which is slower but more powerful
+const LANGUAGE_MODEL_ID = 'copilot-gpt-4'; // Use faster model. Alternative is 'copilot-gpt-4', which is slower but more powerful
 
 export function activate(context: vscode.ExtensionContext) {
 
     // Define a Cat chat handler. 
     const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<ICatChatResult> => {
-        // To talk to an LLM in your subcommand handler implementation, your
-        // extension can use VS Code's `requestChatAccess` API to access the Copilot API.
-        // The GitHub Copilot Chat extension implements this provider.
         if (request.command == 'teach') {
-            stream.progress('让我思考一下如何回复您的问题');
-            //const topic = getTopic(context.history);
-            //const messages = [
-            //    new vscode.LanguageModelChatSystemMessage('You are a cat! Your job is to explain computer science concepts in the funny manner of a cat. Always start your response by stating what concept you are explaining. Always include code samples.'),
-            //    new vscode.LanguageModelChatUserMessage(topic)
-            //];
-            //const chatResponse = await vscode.lm.sendChatRequest(LANGUAGE_MODEL_ID, messages, {}, token);
-            //for await (const fragment of chatResponse.stream) {
-            //    stream.markdown(fragment);
-            //} 
+            stream.progress('让我思考一下如何回复您的问题...');
             const openai = new OpenAIClient(
                 endpoint,
                 new AzureKeyCredential(azureApiKey)
@@ -43,41 +31,31 @@ export function activate(context: vscode.ExtensionContext) {
             //    { role: "assistant", content: "Arrrr! Of course, me hearty! What can I do for ye?" },
             //    { role: "user", content: "What's the best way to train a parrot?" },
             ];
-            
-            //const prompt = request.prompt;
-            //const deploymentName = 'demodavinci';
-            //const result  = await openai.getCompletions(deploymentName, request.prompt, {
-            //    maxTokens: 500,
-            //    temperature: 0.25
-            //    });
-            
             const deploymentName = 'demogpt35';
             const result  = await openai.getChatCompletions(deploymentName, messages, {
                 maxTokens: 500,
                 temperature: 0.25
                 });    
-
-            //for (const choice of result) {
             for await (const choice of result.choices) {
-                //console.log(choice.text);
-                //const delta = choice.delta?.content;
-                //if (delta !== undefined) {
                 console.log(choice.message.content);
-                //const chat: string = choice.message;
                 stream.markdown(`${choice.message.content}`);
                 };
-            //}
-            //};
-            //console.log(result.choices[0].text);
-            //for await (const fragment of result.stream()) {
-            //stream.markdown(result.
-            //};
-            //stream.button({
-            //    command: CAT_NAMES_COMMAND_ID,
-            //    title: vscode.l10n.t('Use Cat Names in Editor')
-            //});
-
             return { metadata: { command: 'teach' } };
+        } else if (request.command == 'gencode') {
+             // To talk to an LLM in your subcommand handler implementation, your
+            // extension can use VS Code's `requestChatAccess` API to access the Copilot API.
+            // The GitHub Copilot Chat extension implements this provider.
+            stream.progress('让我思考下如何生成代码...');
+            const topic = getTopic(context.history);
+            const messages = [
+                new vscode.LanguageModelChatSystemMessage('You are a developer, When replying to a question, the code must be included.'),
+                new vscode.LanguageModelChatUserMessage(topic)
+            ];
+            const chatResponse = await vscode.lm.sendChatRequest(LANGUAGE_MODEL_ID, messages, {}, token);
+            for await (const fragment of chatResponse.stream) {
+                stream.markdown(fragment);
+            }
+            return { metadata: { command: 'gencode' } };
         } else if (request.command == 'play') {
             stream.progress('Throwing away the computer science books and preparing to play with some Python code...');
             const messages = [
