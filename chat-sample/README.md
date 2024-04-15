@@ -4,6 +4,8 @@
 
 这个案例中，调用Azure OpenAI 的能力。
 
+调用Azure OpenAI能力，需要依赖getChatCompletion接口。
+
 This sample shows
 
 - How to contribute a chat participant.
