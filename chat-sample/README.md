@@ -1,5 +1,9 @@
 # Chat Example
 
+这个代码样例展示了如何通过Chat Extension来扩展Chat的能力。
+
+这个案例中，调用Azure OpenAI 的能力。
+
 This sample shows
 
 - How to contribute a chat participant.
