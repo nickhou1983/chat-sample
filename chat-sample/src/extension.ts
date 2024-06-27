@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
             return { metadata: { command: 'teach' } };
           // 第二个判断是判断是否是gencode命令，如果是gencode命令，就调用copilot的接口，返回结果
         } else if (request.command == 'gencode') {
-             // To talk to an LLM in your subcommand handler implementation, your
+            // To talk to an LLM in your subcommand handler implementation, your
             // extension can use VS Code's `requestChatAccess` API to access the Copilot API.
             // The GitHub Copilot Chat extension implements this provider.
             stream.progress('让我思考下如何生成代码...');
