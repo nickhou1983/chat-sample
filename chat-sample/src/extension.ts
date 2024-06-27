@@ -5,7 +5,7 @@ const { OpenAIClient, AzureKeyCredential } = require("@azure/openai");
 const CAT_NAMES_COMMAND_ID = 'cat.namesInEditor';
 const CAT_PARTICIPANT_ID = 'chat-sample.cat';
 const endpoint = 'https://dempgptusnc.openai.azure.com/';
-const azureApiKey = '01bcc1ee88ee419e9cae535161d27add';
+const azureApiKey = 'YOUR_AZURE';
 
 interface ICatChatResult extends vscode.ChatResult {
     metadata: {
