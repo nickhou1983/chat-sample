@@ -1,11 +1,15 @@
 import { chown } from 'fs';
+import { devNull } from 'os';
 import * as vscode from 'vscode';
 const { OpenAIClient, AzureKeyCredential } = require("@azure/openai");
+const fetch = require('node-fetch');
+import { renderPrompt } from '@vscode/prompt-tsx';
+
 
 const CAT_NAMES_COMMAND_ID = 'cat.namesInEditor';
 const CAT_PARTICIPANT_ID = 'chat-sample.cat';
-const endpoint = 'https://dempgptusnc.openai.azure.com/';
-const azureApiKey = 'YOUR_AZURE';
+const endpoint = 'https://demogptue.openai.azure.com/';
+const azureApiKey = '3d3586abc879406e9cc40c6f7aa69bde';
 
 interface ICatChatResult extends vscode.ChatResult {
     metadata: {
@@ -33,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
             //    { role: "assistant", content: "Arrrr! Of course, me hearty! What can I do for ye?" },
             //    { role: "user", content: "What's the best way to train a parrot?" },
             ];
-            const deploymentName = 'demogpt35';
+            const deploymentName = 'demogpt4o';
             // 调用openai的接口
             const result  = await openai.getChatCompletions(deploymentName, messages, {
                 maxTokens: 500,
@@ -45,7 +49,176 @@ export function activate(context: vscode.ExtensionContext) {
                 stream.markdown(`${choice.message.content}`);
                 };
             return { metadata: { command: 'teach' } };
-          // 第二个判断是判断是否是gencode命令，如果是gencode命令，就调用copilot的接口，返回结果
+         
+
+        } else if (request.command == 'kb') {
+            stream.progress('让我查询一下文档');
+            const apiUrl = 'https://api.dify.ai/v1/chat-messages';
+            const apiKey = 'app-DLTtgVeLAkIQurhOAVMWkEMu'; // Replace with actual API key
+            let result = '';
+            const requestBody = {
+                inputs: {},
+                query: request.prompt,
+                //response_mode: "streaming",
+                response_mode: "blocking",
+                conversation_id: "",
+                user: "abc-123"
+            };
+            try {
+                //const fetch = require('node-fetch');
+               
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+
+                
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json(); // Parse JSON response
+                    //stream.markdown(`Response: ${JSON.stringify(data)}`);
+                    stream.markdown(`${data.answer}`);
+
+                } else if (contentType && contentType.includes('text/event-stream')) {
+                    const decoder = new TextDecoder('utf-8');
+                    let buffer = '';
+                    
+                    response.body.on('data', (chunk: Buffer) => {
+                        buffer += decoder.decode(chunk, { stream: true });
+            
+                        let boundaryIndex;
+                        while ((boundaryIndex = buffer.indexOf('\n\n')) !== -1) {
+                            const chunk = buffer.slice(0, boundaryIndex).trim();
+                            buffer = buffer.slice(boundaryIndex + 2);
+                            console.log(chunk);
+                            if (chunk.startsWith('data:')) {
+                                const data = chunk.slice(5).trim(); // Remove 'data:' prefix
+                                try {
+                                    const parsedData = JSON.parse(data);
+                                    console.log(`Response: ${JSON.stringify(parsedData)}`);
+                                    //如果存在answer的属性，就输出answer的内容，如果不存在就跳过
+                                    if (parsedData.thought !== undefined && parsedData.thought !== "") {
+                                        console.log("answer:------"+parsedData.thought);
+                                        result = parsedData.thought;
+                                    }
+
+                                
+                                } catch (e) {
+                                    console.error(e);
+                                    stream.markdown(`Error parsing JSON: ${(e as Error).message}`);
+                                }
+                            }
+                        }
+                    });
+
+
+                    response.body.on('end', () => {
+                        console.log('Response stream has ended.');                     
+                        
+                    });
+                    console.log(result);
+                    if (result) {
+                        stream.markdown(result);
+                    }
+                } else {
+                    const text = await response.text(); // Get raw response text
+                    stream.markdown(`Unexpected content type: ${contentType}. Raw response: ${text}`);
+                }
+
+                
+                                 
+            } catch(err) {
+               // handleError(err, stream);
+            }
+
+
+            return { metadata: { command: 'kb' } };
+        } else if (request.command == 'sql') {
+            stream.progress('让我思考一下如何回复您的问题...');
+            const apiUrl = 'https://api.dify.ai/v1/completion-messages';
+            const apiKey = 'app-Fw0pYoO6VrKaZp7VWBRaVlXl'; // Replace with actual API key
+            let result = '';
+            const requestBody = {
+                inputs: {"default_input": request.prompt},            
+                response_mode: "blocking",
+                user: "abc-123"
+            };
+            try {
+                //const fetch = require('node-fetch');
+               
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+
+                
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json(); // Parse JSON response
+                    //stream.markdown(`Response: ${JSON.stringify(data)}`);
+                    stream.markdown(`${data.answer}`);
+
+                } else if (contentType && contentType.includes('text/event-stream')) {
+                    const decoder = new TextDecoder('utf-8');
+                    let buffer = '';
+                    
+                    response.body.on('data', (chunk: Buffer) => {
+                        buffer += decoder.decode(chunk, { stream: true });
+            
+                        let boundaryIndex;
+                        while ((boundaryIndex = buffer.indexOf('\n\n')) !== -1) {
+                            const chunk = buffer.slice(0, boundaryIndex).trim();
+                            buffer = buffer.slice(boundaryIndex + 2);
+                            console.log(chunk);
+                            if (chunk.startsWith('data:')) {
+                                const data = chunk.slice(5).trim(); // Remove 'data:' prefix
+                                try {
+                                    const parsedData = JSON.parse(data);
+                                    console.log(`Response: ${JSON.stringify(parsedData)}`);
+                                    //如果存在answer的属性，就输出answer的内容，如果不存在就跳过
+                                    if (parsedData.thought !== undefined && parsedData.thought !== "") {
+                                        console.log("answer:------"+parsedData.thought);
+                                        result = parsedData.thought;
+                                    }
+
+                                
+                                } catch (e) {
+                                    console.error(e);
+                                    stream.markdown(`Error parsing JSON: ${(e as Error).message}`);
+                                }
+                            }
+                        }
+                    });
+
+
+                    response.body.on('end', () => {
+                        console.log('Response stream has ended.');                     
+                        
+                    });
+                    console.log(result);
+                    if (result) {
+                        stream.markdown(result);
+                    }
+                } else {
+                    const text = await response.text(); // Get raw response text
+                    stream.markdown(`Unexpected content type: ${contentType}. Raw response: ${text}`);
+                }                               
+            } catch(err) {
+               // handleError(err, stream);
+            }
+            return { metadata: { command: 'sql' } };
+
+        // 第二个判断是判断是否是gencode命令，如果是gencode命令，就调用copilot的接口，返回结果
         } else if (request.command == 'gencode') {
             // To talk to an LLM in your subcommand handler implementation, your
             // extension can use VS Code's `requestChatAccess` API to access the Copilot API.
@@ -73,6 +246,24 @@ export function activate(context: vscode.ExtensionContext) {
                 stream.markdown(fragment);
             }
             return { metadata: { command: 'play' } };
+        } else if (request.command == 'genimage') {
+            stream.progress('让我考虑一下如何生成图片...');
+            const client = new OpenAIClient(
+                endpoint,
+                new AzureKeyCredential(azureApiKey)
+            );
+            const deploymentName = 'Dalle3';
+            const prompt = request.prompt;
+            const n = 1;
+            const size = '1024x1024';
+            const results = await client.getImages(deploymentName, prompt, { n, size });
+            for (const image of results.data) {
+                console.log(`Image generation result URL: ${image.url}`);
+                stream.markdown(`![生成的图片](${image.url})`);
+                };
+            return { metadata: { command: 'genimage' } };
+                
+
         } else {
             const messages = [
                 new vscode.LanguageModelChatSystemMessage(`You are a cat! Think carefully and step by step like a cat would.

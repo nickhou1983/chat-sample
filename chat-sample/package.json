@@ -17,7 +17,7 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [ ],
+    "activationEvents": [],
     "enabledApiProposals": [
         "chatParticipant",
         "chatVariableResolver",
@@ -26,8 +26,8 @@
     "contributes": {
         "chatParticipants": [
             {
-				"id": "chat-sample.cat",
-                "name": "QifengDemo",
+                "id": "chat-sample.cat",
+                "name": "customagent",
                 "description": "What can I teach you?",
                 "isSticky": true,
                 "commands": [
@@ -36,8 +36,20 @@
                         "description": "我可以教你任何内容"
                     },
                     {
+                        "name": "kb",
+                        "description": "我可以帮你查找知识库"
+                    },
+                    {
+                        "name": "sql",
+                        "description": "我可以帮你生成SQL表格"
+                    },
+                    {
                         "name": "gencode",
                         "description": "我可以帮你生成代码"
+                    },
+                    {
+                        "name": "genimage",
+                        "description": "我可以帮你生成图片"
                     },
                     {
                         "name": "play",
@@ -66,5 +78,11 @@
         "eslint": "^7.22.0",
         "tslint": "^6.1.3",
         "typescript": "^4.0.3"
+    },
+    "dependencies": {
+        "@azure/openai": "^1.0.0-beta.12",
+        "@vscode/prompt-tsx": "^0.2.6-alpha",
+        "chat-sample": "file:",
+        "node-fetch": "^2.7.0"
     }
 }
